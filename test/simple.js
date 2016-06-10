@@ -24,10 +24,6 @@ test('should emit error when stream is broken', function(t) {
     unbz2.on('error', function(err) {
         t.ok(true, err.message);
     });
-    unbz2.pipe( concat(function(data) {
-        var expected = "Hello World!\nHow little you are. now.\n\n";
-        t.ok(false, 'we should not get here');
-    }));
 
     unbz2.write(compressed);
     unbz2.end();
@@ -52,3 +48,4 @@ test('should emit error when stream is broken in a different way?', function(t) 
             t.ok(false, "Should not reach end of stream without failing.");
         });
 });
+

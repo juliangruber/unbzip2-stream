@@ -1,4 +1,4 @@
-var through = require('through');
+var through = require('through2');
 var bz2 = require('./lib/bzip2');
 var bitIterator = require('./lib/bit_iterator');
 
@@ -8,7 +8,6 @@ function unbzip2Stream() {
     var bufferQueue = [];
     var hasBytes = 0;
     var blockSize = 0;
-    var broken = false;
     var done = false;
     var bitReader = null;
 
@@ -41,10 +40,9 @@ function unbzip2Stream() {
 
     var outlength = 0;
     function decompressAndQueue(stream) {
-        if (broken) return;
         try {
             return decompressBlock(function(d) {
-                stream.queue(d);
+                stream.push(d);
                 if (d !== null) {
                     //console.error('write at', outlength.toString(16));
                     outlength += d.length;
@@ -55,13 +53,12 @@ function unbzip2Stream() {
         } catch(e) {
             //console.error(e);
             stream.emit('error', e);
-            broken = true;
             return false;
         }
     }
 
     return through(
-        function write(data) {
+        function write(data, _, cb) {
             //console.error('received', data.length,'bytes in', typeof data);
             bufferQueue.push(data);
             hasBytes += data.length;
@@ -75,12 +72,14 @@ function unbzip2Stream() {
                 if (!done) done = !decompressAndQueue(this);
                 if (done) break;
             }
+            cb()
         },
-        function end(x) {
+        function end(cb) {
             //console.error(x,'last compressing with', hasBytes, 'bytes in buffer');
             if (!done) {
                 while(decompressAndQueue(this));
             }
+            cb()
         }
     );
 }
