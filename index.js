@@ -78,7 +78,9 @@ function unbzip2Stream() {
         },
         function end(x) {
             //console.error(x,'last compressing with', hasBytes, 'bytes in buffer');
-            if (!done) {
+            if (done) {
+                this.push(null);
+            } else {
                 while(decompressAndQueue(this));
             }
         }
